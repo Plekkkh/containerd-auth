@@ -1,0 +1,43 @@
+┌──── ○○○ ────┐
+│ Semgrep CLI │
+└─────────────┘
+
+Scanning 104 files (only git-tracked) with 560 Code rules:
+
+  CODE RULES
+
+  Language      Rules   Files          Origin      Rules
+ ─────────────────────────────        ───────────────────
+  <multilang>       6     104          Community     560
+  python          147      72
+
+
+  SUPPLY CHAIN RULES
+
+  💎 Sign in with `semgrep login` and run
+     `semgrep ci` to find dependency vulnerabilities and
+     advanced cross-file findings.
+
+
+  PROGRESS
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 153
+ • Targets scanned: 104
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 153 rules on 104 files: 0 findings.
+💎 Missed out on 1801 pro rules since you aren't logged in!
+⚡ Supercharge Semgrep OSS when you create a free account at https://sg.run/rules.
+(need more rules? `semgrep login` for additional free Semgrep Registry rules)
+
+
+✨ If Semgrep missed a finding, please send us feedback to let us know!
+   See https://semgrep.dev/docs/reporting-false-negatives/
