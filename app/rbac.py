@@ -39,10 +39,10 @@ def get_current_user(
 
     if user.tokens_revoked_before:
         if payload is not None:
-            issued = datetime.fromtimestamp(payload["iat"], tz=timezone.utc).replace(tzinfo=None)
-        else:
-            issued = api_token.created_at
-        if issued <= user.tokens_revoked_before:
+            issued = datetime.fromtimestamp(payload["iat"], tz=timezone.utc).replace(tzinfo=None, microsecond=0)
+            if issued < user.tokens_revoked_before.replace(microsecond=0):
+                raise HTTPException(status_code=401, detail="Token revoked")
+        elif api_token.created_at.replace(tzinfo=None) <= user.tokens_revoked_before:
             raise HTTPException(status_code=401, detail="Token revoked")
 
     return user

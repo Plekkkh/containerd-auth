@@ -47,7 +47,7 @@ def change_password(
         raise HTTPException(401, "Wrong password")
 
     user.password_hash = hash_password(new_password)
-    user.tokens_revoked_before = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
+    user.tokens_revoked_before = datetime.now(timezone.utc).replace(tzinfo=None)
     db.flush()
 
 

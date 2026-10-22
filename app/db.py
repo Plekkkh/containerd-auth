@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -13,7 +13,8 @@ from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
-    sessionmaker, Session
+    sessionmaker,
+    Session
 )
 
 
@@ -29,7 +30,10 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(256), unique=True)
     role: Mapped[str] = mapped_column(String(16), default="user")
     tokens_revoked_before: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
 
 
 class ApiToken(Base):
@@ -39,8 +43,10 @@ class ApiToken(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(64))
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
 
 class ContainerOwnership(Base):
     __tablename__ = "container_ownership"
