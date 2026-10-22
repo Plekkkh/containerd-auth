@@ -62,7 +62,7 @@ jobs:
           pip install bandit semgrep pip-audit
 
       - name: Bandit
-        run: bandit -r app -q -f txt
+        run: bandit -r app -q -f txt -c .bandit
 
       - name: Semgrep (OWASP Top 10)
         run: semgrep --config p/owasp-top-ten --error --quiet .
