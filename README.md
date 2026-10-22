@@ -32,16 +32,16 @@ FastAPI Gateway (uvicorn, VM Ubuntu 24.04)
 
 ## Модель безопасности
 
-| Механизм | Реализация |
-|---|---|
-| Аутентификация | JWT (HS256, TTL 15 мин), пароли — argon2 |
-| API-токены | bearer-токены, в БД только sha256-хэш; массовый отзыв через `tokens_revoked_before` |
-| Авторизация | RBAC (`user`/`admin`), пользователь видит и меняет только свои ресурсы |
-| Anti-enumeration | Чужой и несуществующий ресурс — одинаковый 404 без деталей |
-| Аудит | Таблица `AuditLog`, все мутирующие операции; чтения не логируются |
-| Заголовки | HSTS, CSP, nosniff, X-Frame-Options DENY, Permissions-Policy, COEP, no-store |
-| Ошибки runtime | gRPC-ошибки транслируются в 404/502, внутренние — 500 без утечки деталей |
-| Секреты | При `DEBUG=false` валидатор настроек отклоняет запуск со стандартными `JWT_SECRET` / `ADMIN_PASSWORD` |
+| Механизм         | Реализация                                                                                            |
+|------------------|-------------------------------------------------------------------------------------------------------|
+| Аутентификация   | JWT (HS256, TTL 15 мин), пароли — argon2                                                              |
+| API-токены       | bearer-токены, в БД только sha256-хэш; массовый отзыв через `tokens_revoked_before`                   |
+| Авторизация      | RBAC (`user`/`admin`), пользователь видит и меняет только свои ресурсы                                |
+| Anti-enumeration | Чужой и несуществующий ресурс — одинаковый 404 без деталей                                            |
+| Аудит            | Таблица `AuditLog`, все мутирующие операции; чтения не логируются                                     |
+| Заголовки        | HSTS, CSP, nosniff, X-Frame-Options DENY, Permissions-Policy, COEP, no-store                          |
+| Ошибки runtime   | gRPC-ошибки транслируются в 404/502, внутренние — 500 без утечки деталей                              |
+| Секреты          | При `DEBUG=false` валидатор настроек отклоняет запуск со стандартными `JWT_SECRET` / `ADMIN_PASSWORD` |
 
 Администратор управляет пользователями и видит все ресурсы; `GET /admin/audit` (admin-only) отдаёт журнал операций.
 
@@ -131,16 +131,16 @@ curl -k -X POST https://localhost:8443/auth/login \
 
 Настройки читаются из `.env` (pydantic-settings). Шаблон — `.env.example`.
 
-| Переменная | По умолчанию | Описание |
-|---|---|---|
-| `DEBUG` | `true` | При `false` включается строгая валидация секретов (стандартные значения отклоняются при старте) |
-| `APP_DB_PATH` | `app.db` | Путь к файлу SQLite |
-| `JWT_SECRET` | `change-me` | Ключ подписи JWT (HS256). **Обязательно сменить** при `DEBUG=false` |
-| `JWT_TTL_MINUTES` | `15` | Время жизни JWT в минутах |
-| `RUNTIME_ADAPTER` | `fake` | `fake` — без containerd (демо/тесты), `containerd` — реальный рантайм |
-| `CONTAINERD_SOCKET` | `/run/containerd/containerd.sock` | Путь к unix-сокету containerd |
-| `ADMIN_USERNAME` | `admin` | Логин администратора, создаваемого при старте |
-| `ADMIN_PASSWORD` | `change-me` | Пароль администратора. **Обязательно сменить** при `DEBUG=false` |
+| Переменная          | По умолчанию                      | Описание                                                                                        |
+|---------------------|-----------------------------------|-------------------------------------------------------------------------------------------------|
+| `DEBUG`             | `true`                            | При `false` включается строгая валидация секретов (стандартные значения отклоняются при старте) |
+| `APP_DB_PATH`       | `app.db`                          | Путь к файлу SQLite                                                                             |
+| `JWT_SECRET`        | `change-me`                       | Ключ подписи JWT (HS256). **Обязательно сменить** при `DEBUG=false`                             |
+| `JWT_TTL_MINUTES`   | `15`                              | Время жизни JWT в минутах                                                                       |
+| `RUNTIME_ADAPTER`   | `fake`                            | `fake` — без containerd (демо/тесты), `containerd` — реальный рантайм                           |
+| `CONTAINERD_SOCKET` | `/run/containerd/containerd.sock` | Путь к unix-сокету containerd                                                                   |
+| `ADMIN_USERNAME`    | `admin`                           | Логин администратора, создаваемого при старте                                                   |
+| `ADMIN_PASSWORD`    | `change-me`                       | Пароль администратора. **Обязательно сменить** при `DEBUG=false`                                |
 
 Пример боевой конфигурации:
 
@@ -203,38 +203,38 @@ ls -l /run/containerd/containerd.sock   # владелец root:containerd
 
 Аутентификация — `Authorization: Bearer <JWT>` либо `Bearer <API-токен>`. Роли: `—` (анонимно), `user`, `admin`. Чужой и несуществующий ресурс дают одинаковый 404.
 
-| Метод | Путь | Роль | Назначение |
-|---|---|---|---|
-| POST | `/auth/login` | — | получить JWT по username/password |
-| PATCH | `/auth/password` | user | сменить пароль (инвалидирует JWT и API-токены) |
-| POST | `/auth/tokens` | user | создать API-токен |
-| DELETE | `/auth/tokens/{token_id}` | user | отозвать свой API-токен |
-| POST | `/images` | user | pull образа из registry (регистрирует владение) |
-| GET | `/images` | user | список своих образов |
-| DELETE | `/images/{image_ref}` | user | удалить свой образ (физически — когда владельцев не осталось) |
-| POST | `/containers` | user | создать контейнер из своего образа |
-| GET | `/containers` | user | список своих контейнеров |
-| GET | `/containers/{id}` | user | статус контейнера |
-| POST | `/containers/{id}/start` | user | запустить контейнер |
-| POST | `/containers/{id}/stop` | user | остановить контейнер |
-| GET | `/containers/{id}/logs` | user | логи контейнера |
-| DELETE | `/containers/{id}` | user | удалить контейнер |
-| GET | `/admin/users` | admin | список пользователей |
-| POST | `/admin/users` | admin | создать пользователя |
-| GET | `/admin/users/{username}` | admin | профиль пользователя |
-| PATCH | `/admin/users/{username}` | admin | изменить роль / пароль пользователя |
-| DELETE | `/admin/users/{username}` | admin | удалить пользователя |
-| GET | `/admin/audit` | admin | журнал аудита |
+| Метод  | Путь                      | Роль  | Назначение                                                        |
+|--------|---------------------------|-------|-------------------------------------------------------------------|
+| POST   | `/auth/login`             | —     | получить JWT по username/password                                 |
+| PATCH  | `/auth/password`          | user  | сменить пароль (инвалидирует JWT и API-токены)                    |
+| POST   | `/auth/tokens`            | user  | создать API-токен                                                 |
+| DELETE | `/auth/tokens/{token_id}` | user  | отозвать свой API-токен                                           |
+| POST   | `/images`                 | user  | pull образа из registry (например, docker.io/library/alpine:3.19) |
+| GET    | `/images`                 | user  | список своих образов                                              |
+| DELETE | `/images/{image_ref}`     | user  | удалить свой образ                                                |
+| POST   | `/containers`             | user  | создать контейнер из своего образа                                |
+| GET    | `/containers`             | user  | список своих контейнеров                                          |
+| GET    | `/containers/{id}`        | user  | статус контейнера                                                 |
+| POST   | `/containers/{id}/start`  | user  | запустить контейнер                                               |
+| POST   | `/containers/{id}/stop`   | user  | остановить контейнер                                              |
+| GET    | `/containers/{id}/logs`   | user  | логи контейнера                                                   |
+| DELETE | `/containers/{id}`        | user  | удалить контейнер                                                 |
+| GET    | `/admin/users`            | admin | список пользователей                                              |
+| POST   | `/admin/users`            | admin | создать пользователя                                              |
+| GET    | `/admin/users/{username}` | admin | профиль пользователя                                              |
+| PATCH  | `/admin/users/{username}` | admin | изменить роль пользователя                                        |
+| DELETE | `/admin/users/{username}` | admin | удалить пользователя                                              |
+| GET    | `/admin/audit`            | admin | журнал аудита                                                     |
 
 Коды ошибок:
 
-| Код | Значение |
-|---|---|
-| `401` | нет или невалидный токен |
-| `403` | не хватает роли |
+| Код   | Значение                                          |
+|-------|---------------------------------------------------|
+| `401` | нет или невалидный токен                          |
+| `403` | не хватает роли                                   |
 | `404` | ресурс не существует или чужой (anti-enumeration) |
-| `422` | невалидный ввод |
-| `502` | ошибка containerd / registry |
+| `422` | невалидный ввод                                   |
+| `502` | ошибка containerd / registry                      |
 
 Полная интерактивная документация — Swagger UI (`/docs`) и `openapi.json`.
 
@@ -280,6 +280,17 @@ app/
 tests/               # pytest: unit + e2e
 scripts/             # demo.ps1, live_smoke.py
 ```
+
+## Скриншоты
+
+![Swagger UI](docs/screenshots/swagger.png) 
+
+![demo.ps1](docs/screenshots/demo.png)
+
+![ubuntu](docs/screenshots/containerd_ubuntu.png)
+
+![log](docs/screenshots/log.png) |
+
 
 ## Лицензия
 
