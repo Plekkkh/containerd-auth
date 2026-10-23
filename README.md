@@ -272,7 +272,7 @@ app/
   auth/              # аутентификация, токены
   routers/           # auth, containers, images, admin
   runtime/
-	containerd_api/  # Сгенерированные gRPC стабы
+    containerd_api/  # Сгенерированные gRPC стабы
     base.py          # ABC Runtime + доменные исключения
     fake.py          # in-memory реализация для демо/тестов
     containerd_runtime.py  # gRPC-адаптер containerd
