@@ -1,7 +1,7 @@
 import re
 
 from fastapi import APIRouter, Depends, Request, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.db import ContainerOwnership, get_db, User, ImageOwnership
 from app.rbac import get_current_user
@@ -16,6 +16,18 @@ _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 class ContainerCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64)
     image: str = Field(min_length=1, max_length=256)
+    command: list[str] | None = Field(default=None, max_length=64)
+
+    @field_validator("command")
+    @classmethod
+    def _validate_command(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+
+        for arg in value:
+            if not arg or len(arg) > 1024 or "\x00" in arg:
+                raise ValueError("Invalid command argument")
+        return value
 
     model_config = {"extra": "forbid"}
 
@@ -51,7 +63,7 @@ def create_container(
 
     runtime = request.app.state.runtime
     try:
-        container_id = runtime.create_container(body.name, body.image)
+        container_id = runtime.create_container(body.name, body.image, body.command)
     except RuntimeConflict:
         raise HTTPException(409, "Name already taken")
     except RuntimeUnavailable:

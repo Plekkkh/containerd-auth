@@ -15,7 +15,13 @@ class RuntimeConflict(Exception):
 
 class Runtime(ABC):
     @abstractmethod
-    def create_container(self, container_id: str, image: str) -> str: ...
+    def create_container(
+        self,
+        container_id: str,
+        image: str,
+        command: list[str] | None = None,
+    ) -> str:
+        ...
 
     @abstractmethod
     def start(self, container_id: str) -> None: ...

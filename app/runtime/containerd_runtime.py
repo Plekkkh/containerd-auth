@@ -301,22 +301,33 @@ class ContainerdRuntime(Runtime):
 
     # === Containers ===
 
-    def create_container(self, container_id: str, image: str) -> str:
+    def create_container(
+        self,
+        container_id: str,
+        image: str,
+        command: list[str] | None = None
+    ) -> str:
         """
         Создает контейнер.
 
         spec — это JSON-описание контейнера в формате OCI Runtime Spec.
-            `sleep 3600` используется для того,
-            чтобы контейнер оставался запущенным для демонстрации.
+            Если command не указан, используется дефолтный
+            `echo hello; sleep 300`, чтобы контейнер оставался
+            запущенным для демонстрации.
 
         :param container_id: имя контейнера (id)
         :param image: имя образа
+        :param command: argv процесса внутри контейнера, например,
+            ["/bin/sh", "-c", "echo hello; sleep 300"] или
+            ["nginx", "-g", "daemon off;"]
+
         :return: id созданного контейнера
         """
+        args = command or ["/bin/sh", "-c", "echo hello; sleep 300"]
         spec_json = json.dumps({
             "ociVersion": "1.0",
             "process": {
-                "args": ["/bin/sh", "-c", "echo hello; sleep 300"],
+                "args": args,
                 "terminal": False,
                 "user": {"uid": 0, "gid": 0},
                 "env": [

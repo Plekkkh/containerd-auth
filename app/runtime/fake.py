@@ -5,12 +5,17 @@ class FakeRuntime(Runtime):
         self._containers: dict[str, dict] = {}
         self._images: set[str] = set()
 
-    def create_container(self, container_id: str, image: str) -> str:
-        container_id = container_id
+    def create_container(
+        self,
+        container_id: str,
+        image: str,
+        command: list[str] | None = None
+    ) -> str:
         self._containers[container_id] = {
             "id": container_id,
             "name": container_id,
             "image": image,
+            "command": command or [],
             "is_running": False,
         }
         return container_id
