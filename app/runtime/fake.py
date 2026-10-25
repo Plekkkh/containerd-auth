@@ -29,7 +29,7 @@ class FakeRuntime(Runtime):
     def remove(self, container_id: str) -> None:
         del self._containers[container_id]
 
-    def logs(self, container_id: str) -> str:
+    def logs(self, container_id: str, tail=10) -> str:
         return f"[fake] Logs for container {container_id}\n"
 
     def list_containers(self) -> list[dict]:
