@@ -7,6 +7,7 @@ class Settings(BaseSettings):
 
     DEBUG: bool = False
     APP_DB_PATH: str = "app.db"
+    APP_DB_URL: str = ""
     JWT_SECRET: str = "dev-secret"
     JWT_TTL_MINUTES: int = 15
     RUNTIME_ADAPTER: str = "fake"

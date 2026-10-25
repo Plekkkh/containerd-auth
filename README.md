@@ -131,16 +131,17 @@ curl -k -X POST https://localhost:8443/auth/login \
 
 Настройки читаются из `.env` (pydantic-settings). Шаблон — `.env.example`.
 
-| Переменная          | По умолчанию                      | Описание                                                                                        |
-|---------------------|-----------------------------------|-------------------------------------------------------------------------------------------------|
-| `DEBUG`             | `true`                            | При `false` включается строгая валидация секретов (стандартные значения отклоняются при старте) |
-| `APP_DB_PATH`       | `app.db`                          | Путь к файлу SQLite                                                                             |
-| `JWT_SECRET`        | `change-me`                       | Ключ подписи JWT (HS256). **Обязательно сменить** при `DEBUG=false`                             |
-| `JWT_TTL_MINUTES`   | `15`                              | Время жизни JWT в минутах                                                                       |
-| `RUNTIME_ADAPTER`   | `fake`                            | `fake` — без containerd (демо/тесты), `containerd` — реальный рантайм                           |
-| `CONTAINERD_SOCKET` | `/run/containerd/containerd.sock` | Путь к unix-сокету containerd                                                                   |
-| `ADMIN_USERNAME`    | `admin`                           | Логин администратора, создаваемого при старте                                                   |
-| `ADMIN_PASSWORD`    | `change-me`                       | Пароль администратора. **Обязательно сменить** при `DEBUG=false`                                |
+| Переменная          | По умолчанию                      | Описание                                                                                                 |
+|---------------------|-----------------------------------|----------------------------------------------------------------------------------------------------------|
+| `DEBUG`             | `true`                            | При `false` включается строгая валидация секретов (стандартные значения отклоняются при старте)          |
+| `APP_DB_PATH`       | `app.db`                          | Путь к файлу SQLite (используется, если `APP_DB_URL` пуст)                                               |
+| `APP_DB_URL`        | `—`                               | Полный URL, имеет приоритет над `APP_DB_PATH`. Postgresql: `postgresql+psycopg://user:pass@host:5432/db` | |
+| `JWT_SECRET`        | `change-me`                       | Ключ подписи JWT (HS256). **Обязательно сменить** при `DEBUG=false`                                      |
+| `JWT_TTL_MINUTES`   | `15`                              | Время жизни JWT в минутах                                                                                |
+| `RUNTIME_ADAPTER`   | `fake`                            | `fake` — без containerd (демо/тесты), `containerd` — реальный рантайм                                    |
+| `CONTAINERD_SOCKET` | `/run/containerd/containerd.sock` | Путь к unix-сокету containerd                                                                            |
+| `ADMIN_USERNAME`    | `admin`                           | Логин администратора, создаваемого при старте                                                            |
+| `ADMIN_PASSWORD`    | `change-me`                       | Пароль администратора. **Обязательно сменить** при `DEBUG=false`                                         |
 
 Пример боевой конфигурации:
 

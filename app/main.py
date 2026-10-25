@@ -10,7 +10,7 @@ from app.routers import auth, containers, images, admin
 
 def create_app() -> FastAPI:
     settings = Settings()
-    init_db(settings.APP_DB_PATH)
+    init_db(settings.APP_DB_URL or settings.APP_DB_PATH)
     ensure_bootstrap_admin(settings)
 
     app = FastAPI(title="Container Manager", version="1.0.0")

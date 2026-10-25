@@ -77,11 +77,25 @@ _engine = None
 _SessionLocal: sessionmaker | None = None
 
 
-def init_db(db_path: str) -> None:
-    """Создать движок и таблицы. Вызывается один раз из create_app()."""
+def init_db(db_path_or_url: str) -> None:
+    """
+    Создать движок и таблицы. Вызывается один раз из create_app().
+
+    :param db_path_or_url: Путь к sqlite-файлу или URL подключения.
+    """
+
     global _engine, _SessionLocal
-    url = f"sqlite:///{db_path}"
-    _engine = create_engine(url, connect_args={"check_same_thread": False})
+
+    if "://" in db_path_or_url:
+        url = db_path_or_url
+    else:
+        url = f"sqlite:///{db_path_or_url}"
+
+    connect_args = {
+        "check_same_thread": False
+    } if url.startswith("sqlite:///") else {}
+
+    _engine = create_engine(url, connect_args=connect_args)
     _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
     Base.metadata.create_all(_engine)
 

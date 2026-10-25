@@ -35,6 +35,7 @@ def app_factory(tmp_path, monkeypatch):
     monkeypatch.setenv("ADMIN_USERNAME", "admin")
     monkeypatch.setenv("ADMIN_PASSWORD", "AdminTest999!")
     monkeypatch.setenv("APP_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.delenv("APP_DB_URL", raising=False)
     monkeypatch.setenv("JWT_SECRET", "3199277a63dc8017934e8b5586ee240163a728fbb08a984264df32ab8a56ef46")
     monkeypatch.setenv("RUNTIME_ADAPTER", "fake")
 
