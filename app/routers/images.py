@@ -20,7 +20,7 @@ _IMAGE_RE = re.compile(
 )
 
 class ImagePull(BaseModel):
-    name: str = Field(min_length=1, max_length=256)
+    image_ref: str = Field(min_length=1, max_length=256)
 
     model_config = {"extra": "forbid"}
 
@@ -36,7 +36,7 @@ def pull_image(
     user: User = Depends(get_current_user),
     db=Depends(get_db),
 ):
-    ref = body.name
+    ref = body.image_ref
     if not _valid_ref(ref):
         raise HTTPException(422, "Invalid image reference")
 

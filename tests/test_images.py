@@ -20,9 +20,9 @@ def c(client):
 
 def test_pull_is_idempotent_across_users(c, h):
     """user1 пуллит; user2 пуллит тот же ref — не 409, у каждого своя ссылка."""
-    r1 = c.post("/images", json={"name": REF}, headers=h["user1"])
+    r1 = c.post("/images", json={"image_ref": REF}, headers=h["user1"])
     assert r1.status_code in (200, 201), r1.text
-    r2 = c.post("/images", json={"name": REF}, headers=h["user2"])
+    r2 = c.post("/images", json={"image_ref": REF}, headers=h["user2"])
     assert r2.status_code in (200, 201), r2.text
 
     # Каждый видит ref у себя
@@ -34,8 +34,8 @@ def test_pull_is_idempotent_across_users(c, h):
 
 def test_list_images_scoped_by_owner(c, h):
     other = "docker.io/library/busybox:1.36"
-    c.post("/images", json={"name": REF}, headers=h["user1"])
-    c.post("/images", json={"name": other}, headers=h["user2"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user1"])
+    c.post("/images", json={"image_ref": other}, headers=h["user2"])
 
     l1 = [i["ref"] for i in c.get("/images", headers=h["user1"]).json()]
     l2 = [i["ref"] for i in c.get("/images", headers=h["user2"]).json()]
@@ -48,8 +48,8 @@ def test_list_images_scoped_by_owner(c, h):
 
 def test_delete_detaches_only_own_link(c, h):
     """user2 удаляет свою ссылку — образ продолжает жить для user1."""
-    c.post("/images", json={"name": REF}, headers=h["user1"])
-    c.post("/images", json={"name": REF}, headers=h["user2"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user1"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user2"])
 
     r = c.delete(f"/images/{REF}", headers=h["user2"])
     assert r.status_code == 200, r.text
@@ -68,8 +68,8 @@ def test_delete_detaches_only_own_link(c, h):
 
 def test_last_owner_delete_removes_image_from_runtime(c, h):
     """Когда последняя ссылка отвязана — образ физически удаляется из рантайма."""
-    c.post("/images", json={"name": REF}, headers=h["user1"])
-    c.post("/images", json={"name": REF}, headers=h["user2"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user1"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user2"])
 
     c.delete(f"/images/{REF}", headers=h["user1"])
     c.delete(f"/images/{REF}", headers=h["user2"])
@@ -82,7 +82,7 @@ def test_last_owner_delete_removes_image_from_runtime(c, h):
 
 def test_user_cannot_see_or_delete_foreign_image(c, h):
     """IDOR по образам: чужой ref — 404 (не раскрываем существование)."""
-    c.post("/images", json={"name": REF}, headers=h["user1"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user1"])
 
     r = c.delete(f"/images/{REF}", headers=h["user2"])
     assert r.status_code in (403, 404), r.text
@@ -96,8 +96,8 @@ def test_user_cannot_see_or_delete_foreign_image(c, h):
 
 def test_admin_can_delete_image_entirely(c, h):
     """Админ сносит образ целиком: все ссылки + рантайм."""
-    c.post("/images", json={"name": REF}, headers=h["user1"])
-    c.post("/images", json={"name": REF}, headers=h["user2"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user1"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user2"])
 
     r = c.delete(f"/images/{REF}", headers=h["admin"])
     assert r.status_code == 200, r.text
@@ -109,7 +109,7 @@ def test_admin_can_delete_image_entirely(c, h):
 
 def test_container_created_from_pulled_image(c, h):
     """Happy-path: pull -> создать контейнер из образа."""
-    c.post("/images", json={"name": REF}, headers=h["user1"])
+    c.post("/images", json={"image_ref": REF}, headers=h["user1"])
     r = c.post(
         "/containers",
         json={"name": "c-alpine", "image": REF},

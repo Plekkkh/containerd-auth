@@ -3,7 +3,7 @@ import pytest
 
 
 def mk_container(c, headers, name, image="docker.io/library/alpine:3.19"):
-    rb = c.post("/images", json={"name": image}, headers=headers)
+    rb = c.post("/images", json={"image_ref": image}, headers=headers)
     r = c.post("/containers", json={"name": name, "image": image}, headers=headers)
     assert r.status_code == 201, r.text
     rb = c.delete(f"/images/{image}", headers=headers)

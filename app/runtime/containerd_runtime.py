@@ -308,7 +308,7 @@ class ContainerdRuntime(Runtime):
         command: list[str] | None = None
     ) -> str:
         """
-        Создает контейнер.
+        Создает и запускает контейнер.
 
         spec — это JSON-описание контейнера в формате OCI Runtime Spec.
             Если command не указан, используется дефолтный

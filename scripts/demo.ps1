@@ -82,7 +82,7 @@ Step "login user1 -> 200" @(200) $code
 $u1 = $r.access_token
 
 # --- 6. user1 тянет alpine ---
-($code, $null) = Api POST "/images" $u1 @{ name = "docker.io/library/alpine:3.19" }
+($code, $null) = Api POST "/images" $u1 @{ image_ref = "docker.io/library/alpine:3.19" }
 Step "user1: pull alpine:3.19 -> 200/201" @(200, 201) $code
 
 # --- 7. user1 создаёт контейнер ---

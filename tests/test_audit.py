@@ -22,7 +22,7 @@ def ctx(client):
 def test_audit_container_create_and_delete(ctx):
     c, h, _ = ctx
     ref = "docker.io/library/alpine:3.19"
-    r = c.post("/images", json={"name": ref}, headers=h)
+    r = c.post("/images", json={"image_ref": ref}, headers=h)
     r = c.post("/containers", json={"name": "aud-c1", "image": "docker.io/library/alpine:3.19"},
                headers=h)
     assert r.status_code == 201, r.text
@@ -45,7 +45,7 @@ def _db():
 def test_audit_image_pull_and_delete(ctx):
     c, h, _ = ctx
     ref = "docker.io/library/alpine:3.19"
-    r = c.post("/images", json={"name": ref}, headers=h)
+    r = c.post("/images", json={"image_ref": ref}, headers=h)
     assert r.status_code in (200, 201), r.text
     r = c.delete(f"/images/{ref}", headers=h)
     assert r.status_code == 200, r.text
