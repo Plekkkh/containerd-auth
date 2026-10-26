@@ -7,9 +7,10 @@ from app.auth.bootstrap import ensure_bootstrap_admin
 from app.runtime.factory import make_runtime
 from app.routers import auth, containers, images, admin
 
+settings = Settings()
+
 
 def create_app() -> FastAPI:
-    settings = Settings()
     init_db(settings.APP_DB_URL or settings.APP_DB_PATH)
     ensure_bootstrap_admin(settings)
 
@@ -57,4 +58,4 @@ async def security_headers(request, call_next):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=settings.APP_HOST, port=settings.APP_PORT)

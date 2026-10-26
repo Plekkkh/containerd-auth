@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "Password123!"
 
+    APP_HOST: str = "0.0.0.0"
+    APP_PORT: int = 8000
+
     @model_validator(mode="after")
     def _prod_secret(self):
         if not self.DEBUG:
