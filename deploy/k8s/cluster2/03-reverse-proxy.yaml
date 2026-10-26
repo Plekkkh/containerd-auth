@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reverse-proxy-conf
+  namespace: core
+  labels:
+    app: reverse-proxy
+data:
+  default.conf: |
+    limit_req_zone $binary_remote_addr zone=authlogin:10m rate=10r/m;
+
+    server {
+      listen 30443 ssl;
+      server_name _;
+
+      ssl_certificate     /etc/tls/tls.crt;
+      ssl_certificate_key /etc/tls/tls.key;
+      ssl_protocols TLSv1.2 TLSv1.3;
+
+      location /auth/login {
+        limit_req zone=authlogin burst=5 nodelay;
+        limit_req_status 429;
+        proxy_pass http://containerd-auth:8000;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      }
+
+      location / {
+        proxy_pass http://containerd-auth:8000;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reverse-proxy
+  namespace: core
+  labels:
+    app: reverse-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reverse-proxy
+  template:
+    metadata:
+      labels:
+        app: reverse-proxy
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 30443
+        volumeMounts:
+        - name: conf
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        - name: tls
+          mountPath: /etc/tls
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /
+            port: 30443
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 250m, memory: 128Mi}
+      volumes:
+      - name: conf
+        configMap:
+          name: reverse-proxy-conf
+      - name: tls-certs
+        secret:
+          secretName: reverse-proxy-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reverse-proxy
+  namespace: core
+spec:
+  type: NodePort
+  externalTrafficPolicy: Local
+  selector:
+    app: reverse-proxy
+  ports:
+  - nodePort: 30443
+    port: 30443
+    targetPort: 30443
+    protocol: TCP

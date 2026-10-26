@@ -1,0 +1,64 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: containerd-auth-security
+spec:
+  kprobes:
+    # Доступ к чувствительным файлам и токенам k8s.
+    - call: "security_file_open"
+      syscall: false
+      args:
+        - index: 0
+          type: "file"
+      selectors:
+      - matchArgs:
+        - index: 0
+          operator: "Prefix"
+          values:
+            - "/etc/shadow"
+            - "/var/run/secrets/kubernetes.io/serviceaccount/token"
+    # Побег из контейнера через сокет containerd.
+    - call: "sys_connect"
+      syscall: true
+      args:
+        - index: 0
+          type: "int"
+        - index: 1
+          type: "sock"
+      selectors:
+        - matchArgs:
+          - index: 1
+            operator: "Equal"
+            values:
+              - "AF_UNIX"
+    # RCE
+    - call: "sys_execve"
+      syscall: true
+      args:
+        - index: 0
+          type: "string"
+      selectors:
+        - matchNamespaces:
+            - core
+          matchArgs:
+            - index: 0
+              operator: "Prefix"
+              values:
+                - "/bin/sh"
+                - "/bin/bash"
+    # Запуск пакетных менеджеров
+    - call: "sys_execve"
+      syscall: true
+      args:
+        - index: 0
+          type: "string"
+      selectors:
+        - matchNamespaces:
+            - core
+          matchArgs:
+            - index: 0
+              operator: "Prefix"
+              values:
+                - "/sbin/apk"
+                - "/usr/bin/apt"
+                - "/usr/bin/apt-get"

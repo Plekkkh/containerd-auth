@@ -1,0 +1,29 @@
+# reverse-proxy: ingress от Docker gateway, egress к containerd-auth.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-reverse-proxy
+  namespace: core
+spec:
+  podSelector:
+    matchLabels:
+      app: reverse-proxy
+      role: proxy
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: "${DOCKER_GATEWAY}/16"
+    ports:
+    - protocol: TCP
+      port: 30443
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: containerd-auth
+    ports:
+    - protocol: TCP
+      port: 8000

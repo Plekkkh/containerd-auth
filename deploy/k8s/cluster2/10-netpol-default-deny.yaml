@@ -1,0 +1,11 @@
+# Default Deny: весь ingress+egress в namespace core запрещен.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: core
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress

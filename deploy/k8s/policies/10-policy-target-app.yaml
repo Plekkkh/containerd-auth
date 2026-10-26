@@ -1,0 +1,51 @@
+# AdmissionPolicy 1: разрешается деплой только целевого приложения.
+# CREATE любого workload'а в ns core отклоняется, если:
+#   - нет метки app.kubernetes.io/part-of: caas-lab, ИЛИ
+#   - образ не из разрешенного списка (локальные образы лабы + официальный registry whitelist).
+# badPods живут в ns badpods и этим правилом не матчатся (Tetragon-часть задания).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: target-app-only
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: require-project-label
+    match:
+      any:
+      - resources:
+          kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+          operations: ["CREATE"]
+          namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: containerd-auth-lab
+    validate:
+      message: "Деплой разрешен только целевому приложению."
+      pattern:
+        spec:
+          template:
+            metadata:
+              labels:
+                app.kubernetes.io/part-of: "containerd-auth-lab"
+  - name: image-allowlist
+    match:
+      any:
+      - resources:
+          kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+          operations: ["CREATE"]
+          namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: containerd-auth-lab
+    validate:
+      message: "Образ не в разрешенном списке."
+      deny:
+        conditions:
+          all:
+          - key: "{{ images.containers.*.registry }}"
+            operator: AllNotIn
+            value:
+            - "docker.io/library"
+            - "docker.io/cilium"
+            - "ghcr.io/cilium"
+            - "local"

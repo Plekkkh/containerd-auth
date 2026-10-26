@@ -1,0 +1,29 @@
+# containerd-auth: ingress от reverse-proxy, egress к postgres.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-containerd-auth
+  namespace: core
+spec:
+  podSelector:
+    matchLabels:
+      app: containerd-auth
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: reverse-proxy
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432

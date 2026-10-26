@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-worker
+  namespace: client
+  labels:
+    app: job-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: job-worker
+  template:
+    metadata:
+      labels:
+        app: job-worker
+    spec:
+      containers:
+      - name: worker
+        # Собирается из воркер части репо; перед apply:
+        #   docker build -t job-worker:local .
+        #   kind load docker-image -n containerd-auth-client job-worker:local
+        image: job-worker:local
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: job-worker-config
+        env:
+        # DOCKER_GATEWAY подставляется скриптом deploy.sh
+        - name: WORKER_BASE_URL
+          value: "https://${DOCKER_GATEWAY}:30443"
+        # Secret
+        - name: WORKER_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: worker-api-token
+              key: API_TOKEN
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 250m, memory: 128Mi}

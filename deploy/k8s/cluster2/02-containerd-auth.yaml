@@ -1,0 +1,45 @@
+# containerd-auth: главный сервис из этого же репо. Сборка/загрузка образа:
+#   docker build -t containerd-auth:local .
+#   kind load docker-image -n containerd-auth-core containerd-auth:local
+#
+# ВАЖНО: у ноды kind есть СВОЙ containerd и СВОЙ сокет
+# /run/containerd/containerd.sock внутри контейнера ноды.
+#  hostPath монтирует именно его.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: containerd-auth
+  namespace: core
+  labels:
+    app: containerd-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: containerd-auth
+  template:
+    metadata:
+      labels:
+        app: containerd-auth
+    spec:
+      containers:
+      - name: containerd-auth
+        image: containerd-auth:local
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: containerd-auth-secret
+        volumeMounts:
+        - name: containerd-sock
+          mountPath: /run/containerd/containerd.sock
+          readOnly: true
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 512Mi}
+      volumes:
+      - name: containerd-sock
+        hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket

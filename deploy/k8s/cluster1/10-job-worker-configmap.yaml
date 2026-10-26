@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: job-worker-config
+  namespace: client
+data:
+  REDIS_URL: "redis://redis:6379/0"
+  WORKER_TLS_INSECURE_SKIP_VERIFY: "true"
+  WORKER_POLL_INTERVAL_SEC: "5"
+  WORKER_REQUEST_TIMEOUT_SEC: "15.0"

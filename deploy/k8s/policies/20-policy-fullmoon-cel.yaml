@@ -1,0 +1,27 @@
+# AdmissionPolicy 2: редактирование (UPDATE) workload'ов — только в сутки полнолуния.
+#
+# Реализация: Kyverno ValidatingPolicy (CEL-first, kyverno.io/v1alpha1).
+#   - epoch-day = int((time.Now() - epoch) / 86400s) — целочисленное сравнение, без парсинга ISO 8601.
+#   - список полнолуний (epoch-days) генерируется scripts/gen_fullmoon.py и подставляется
+#     между маркерами BEGIN/END_FULLMOON_DAYS. Руками блок не править.
+#
+# ФОЛБЭК для Kyverno без CEL-расширения: файл 21-policy-fullmoon-jmespath.yaml.disabled.
+apiVersion: kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: fullmoon-edit-window
+spec:
+  failureAction: Enforce
+  matchConstraints:
+    resourceRules:
+    - apiGroups: ["apps"]
+      apiVersions: ["v1"]
+      resources: ["deployments", "statefulsets", "daemonsets"]
+      operations: ["UPDATE"]
+  validations:
+  # BEGIN_FULLMOON_DAYS
+  - expression: >-
+      int((time.Now() - timestamp('1970-01-01T00:00:00Z')) / duration('86400s'))
+        in [20752, 20781, 20811, 20840, 20870, 20899, 20929, 20958, 20988, 21017, 21047, 21076, 21106, 21136, 21165]
+    message: "Редактирование workload'ов разрешено только в сутки полнолуния (ближайшее окно: 2026-10-26 03:35 UTC)."
+  # END_FULLMOON_DAYS

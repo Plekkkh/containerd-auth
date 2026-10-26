@@ -1,0 +1,21 @@
+# Redis: ingress только от job-worker. Egress redis не нужен:
+# TCP-ответы в уже установленной сессии проходят по conntrack без явного egress-правила.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-ingress
+  namespace: client
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: job-worker
+    ports:
+    - protocol: TCP
+      port: 6379
