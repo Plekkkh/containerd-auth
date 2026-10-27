@@ -86,8 +86,8 @@ done
 for f in "$ROOT"/cluster2/1*-netpol-*.yaml; do
   [ -f "$f" ] && envsubst < "$f" > "$STAGE/cluster2/$(basename "$f")"
 done
-if [ -f "$ROOT/cluster1/02-job-worker.yaml" ]; then
-  envsubst < "$ROOT/cluster1/02-job-worker.yaml" > "$STAGE/cluster1/02-job-worker.yaml"
+if [ -f "$ROOT/cluster1/11-job-worker.yaml" ]; then
+  envsubst < "$ROOT/cluster1/11-job-worker.yaml" > "$STAGE/cluster1/11-job-worker.yaml"
 fi
 
 echo "=========================================================="
@@ -182,7 +182,12 @@ kubectl --context "$CTX_C2" apply -f "$STAGE/cluster2/"
 
 # Кластер 1: Очередь Redis
 kubectl --context "$CTX_C1" apply -f "$ROOT/cluster1/01-redis.yaml"
-kubectl --context "$CTX_C1" apply -f "$STAGE/cluster1/1*-netpol-*.yaml"
+
+if [ -f "$ROOT/cluster1/10-job-worker-configmap.yaml" ]; then
+  kubectl --context "$CTX_C1" apply -f "$ROOT/cluster1/10-job-worker-configmap.yaml"
+fi
+
+kubectl --context "$CTX_C1" apply -f "$STAGE/cluster1/2*-netpol-*.yaml"
 
 echo "=========================================================="
 echo " [8/9] Установка Kyverno & Tetragon (Кластер 2)"
@@ -252,7 +257,7 @@ stringData:
 EOF
 
 # Запускаем job-worker в Кластере 1
-kubectl --context "$CTX_C1" apply -f "$ROOT/cluster1/02-job-worker.yaml"
+kubectl --context "$CTX_C1" apply -f "$ROOT/cluster1/11-job-worker.yaml"
 
 # Деплой тестовых badPods в Кластер 2 (в отдельный namespace)
 kubectl --context "$CTX_C2" apply -f "$ROOT/badpods/"
