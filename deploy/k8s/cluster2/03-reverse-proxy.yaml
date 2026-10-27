@@ -75,7 +75,7 @@ spec:
       - name: conf
         configMap:
           name: reverse-proxy-conf
-      - name: tls-certs
+      - name: tls
         secret:
           secretName: reverse-proxy-tls
 ---
