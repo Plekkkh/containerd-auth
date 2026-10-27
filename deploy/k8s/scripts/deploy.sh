@@ -8,6 +8,10 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$HERE/.."
 
+STAGE="$ROOT/.rendered"
+rm -rf "$STAGE"
+mkdir -p "$STAGE/cluster1" "$STAGE/cluster2"
+
 # Имена кластеров и контекстов kubectl
 C1_NAME="containerd-auth-client"
 C2_NAME="containerd-auth-core"
@@ -56,6 +60,10 @@ EOF
   echo "[+] Мастер-ключ сгенерирован с правами 0600."
 fi
 
+ENCRYPTION_CONFIG_PATH="$(realpath "${ENCRYPTION_FILE}")"
+export ENCRYPTION_CONFIG_PATH
+echo "[+] ENCRYPTION_CONFIG_PATH=${ENCRYPTION_CONFIG_PATH}"
+
 echo "=========================================================="
 echo " [2/9] Создание kind-кластеров"
 echo "=========================================================="
@@ -65,8 +73,10 @@ if ! kind get clusters | grep -q "^${C1_NAME}$"; then
 fi
 
 if ! kind get clusters | grep -q "^${C2_NAME}$"; then
+  envsubst '$ENCRYPTION_CONFIG_PATH' < "$ROOT/cluster2/kind-config.yaml" > "$STAGE/cluster2-kind-config.yaml"
+
   echo "[*] Создание Кластера 2 (${C2_NAME})..."
-  kind create cluster --name "$C2_NAME" --config "$ROOT/cluster2/kind-config.yaml"
+  kind create cluster --name "$C2_NAME" --config "$STAGE/cluster2-kind-config.yaml"
 fi
 
 echo "=========================================================="
@@ -75,10 +85,6 @@ echo "=========================================================="
 DOCKER_GATEWAY="$(docker network inspect kind -f '{{(index .IPAM.Config 0).Gateway}}')"
 echo "[+] DOCKER_GATEWAY=${DOCKER_GATEWAY}"
 export DOCKER_GATEWAY
-
-STAGE="$ROOT/.rendered"
-rm -rf "$STAGE"
-mkdir -p "$STAGE/cluster1" "$STAGE/cluster2"
 
 for f in "$ROOT"/cluster1/2*-netpol-*.yaml; do
   [ -f "$f" ] && envsubst < "$f" > "$STAGE/cluster1/$(basename "$f")"
