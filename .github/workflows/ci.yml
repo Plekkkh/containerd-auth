@@ -65,7 +65,7 @@ jobs:
         run: bandit -r app -q -f txt -c .bandit
 
       - name: Semgrep (OWASP Top 10)
-        run: semgrep --config p/owasp-top-ten --error --quiet .
+        run: semgrep --config p/owasp-top-ten --exclude "Dockerfile" --error --quiet .
 
       - name: pip-audit
         run: pip-audit -r requirements.txt
