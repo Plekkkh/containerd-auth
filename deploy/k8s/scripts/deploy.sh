@@ -108,7 +108,7 @@ for ctx in "$CTX_C1" "$CTX_C2"; do
 done
 
 echo "=========================================================="
-echo " [5/9] Сборка и загрузка локальных Docker-образов"
+echo " [5/9] Сборка и предзагрузка Docker-образов"
 echo "=========================================================="
 # Образ containerd-auth для Кластера 2
 if [ -f "$ROOT/../../Dockerfile" ]; then
@@ -123,6 +123,34 @@ if [ -f "$ROOT/../../worker/Dockerfile" ]; then
   docker build -t job-worker:local -f "$ROOT/../../worker/Dockerfile" "$ROOT/../../worker"
   kind load docker-image --name "$C1_NAME" job-worker:local
 fi
+
+helm repo add kyverno https://kyverno.github.io/kyverno --force-update >/dev/null 2>&1
+helm repo add cilium https://helm.cilium.io --force-update >/dev/null 2>&1
+helm repo update >/dev/null 2>&1
+
+echo "[*] Извлечение списка образов Kyverno..."
+KYVERNO_IMAGES=$(helm template kyverno kyverno/kyverno \
+  --namespace kyverno 2>/dev/null | \
+  grep -E '^\s*image:\s*' | awk '{print $2}' | tr -d '"'\'' ' | grep 'kyverno' | sort -u)
+
+for img in $KYVERNO_IMAGES; do
+  echo "[+] Хостовый pull Kyverno: $img"
+  docker pull "$img"
+  echo "[+] Загрузка в ноду $C2_NAME..."
+  kind load docker-image "$img" --name "$C2_NAME"
+done
+
+echo "[*] Извлечение списка образов Tetragon..."
+TETRAGON_IMAGES=$(helm template tetragon cilium/tetragon \
+  --namespace tetragon 2>/dev/null | \
+  grep -E '^\s*image:\s*' | awk '{print $2}' | tr -d '"'\'' ' | grep 'tetragon' | sort -u)
+
+for img in $TETRAGON_IMAGES; do
+  echo "[+] Хостовый pull Tetragon: $img"
+  docker pull "$img"
+  echo "[+] Загрузка в ноду $C2_NAME..."
+  kind load docker-image "$img" --name "$C2_NAME"
+done
 
 echo "=========================================================="
 echo " [6/9] Инициализация Namespaces и Secrets"
@@ -198,10 +226,6 @@ kubectl --context "$CTX_C1" apply -f "$STAGE/cluster1/2*-netpol-*.yaml"
 echo "=========================================================="
 echo " [8/9] Установка Kyverno & Tetragon (Кластер 2)"
 echo "=========================================================="
-helm repo add kyverno https://kyverno.github.io/kyverno --force-update >/dev/null 2>&1 || true
-helm repo add cilium https://helm.cilium.io --force-update >/dev/null 2>&1 || true
-helm repo update >/dev/null 2>&1
-
 # Установка Kyverno
 if ! kubectl --context "$CTX_C2" -n kyverno get deploy kyverno-admission-controller >/dev/null 2>&1; then
   echo "[*] Установка Kyverno..."
@@ -210,6 +234,7 @@ if ! kubectl --context "$CTX_C2" -n kyverno get deploy kyverno-admission-control
 fi
 
 # Применение политик допуска
+echo "[*] Применение политик Kyverno..."
 kubectl --context "$CTX_C2" apply -f "$ROOT/policies/10-policy-target-app.yaml"
 kubectl --context "$CTX_C2" apply -f "$ROOT/policies/20-policy-fullmoon-cel.yaml"
 
@@ -219,6 +244,8 @@ if ! kubectl --context "$CTX_C2" -n tetragon get ds tetragon >/dev/null 2>&1; th
   helm upgrade --install tetragon cilium/tetragon \
     --namespace tetragon --create-namespace --kube-context "$CTX_C2" --wait
 fi
+
+echo "[*] Применение политик Tetragon..."
 kubectl --context "$CTX_C2" apply -f "$ROOT/tetragon/10-tracingpolicy-security.yaml"
 
 echo "=========================================================="
