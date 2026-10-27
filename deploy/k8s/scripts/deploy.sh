@@ -135,7 +135,7 @@ KYVERNO_IMAGES=$(helm template kyverno kyverno/kyverno \
 
 for img in $KYVERNO_IMAGES; do
   echo "[+] Хостовый pull Kyverno: $img"
-  docker pull "$img"
+  docker pull --platform linux/amd64 "$img"
   echo "[+] Загрузка в ноду $C2_NAME..."
   kind load docker-image "$img" --name "$C2_NAME"
 done
@@ -147,7 +147,7 @@ TETRAGON_IMAGES=$(helm template tetragon cilium/tetragon \
 
 for img in $TETRAGON_IMAGES; do
   echo "[+] Хостовый pull Tetragon: $img"
-  docker pull "$img"
+  docker pull --platform linux/amd64 "$img"
   echo "[+] Загрузка в ноду $C2_NAME..."
   kind load docker-image "$img" --name "$C2_NAME"
 done
