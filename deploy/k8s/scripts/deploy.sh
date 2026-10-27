@@ -82,7 +82,7 @@ fi
 echo "=========================================================="
 echo " [3/9] Определение сети Docker и рендер NetworkPolicy"
 echo "=========================================================="
-DOCKER_GATEWAY="$(docker network inspect kind -f '{{(index .IPAM.Config 0).Gateway}}')"
+DOCKER_GATEWAY="$(docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Gateway and (.Gateway | contains("."))) | .Gateway' | head -n 1)"
 echo "[+] DOCKER_GATEWAY=${DOCKER_GATEWAY}"
 export DOCKER_GATEWAY
 
@@ -113,7 +113,7 @@ echo "=========================================================="
 # Образ containerd-auth для Кластера 2
 if [ -f "$ROOT/../../Dockerfile" ]; then
   echo "[*] Сборка containerd-auth:local..."
-  docker build -t containerd-auth:local "$ROOT"
+  docker build -t containerd-auth:local -f "$ROOT/../../Dockerfile" "$ROOT/../../"
   kind load docker-image --name "$C2_NAME" containerd-auth:local
 fi
 
