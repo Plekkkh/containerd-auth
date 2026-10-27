@@ -15,7 +15,7 @@ spec:
   ingress:
   - from:
     - ipBlock:
-        cidr: "${DOCKER_GATEWAY}/16"
+        cidr: "${DOCKER_GATEWAY}/32"
     ports:
     - protocol: TCP
       port: 30443
