@@ -308,6 +308,10 @@ ADMIN_TOKEN=$(curl -k -s --retry 5 --retry-connrefused -X POST "https://${DOCKER
   -H "Content-Type: application/json" \
   -d "{\"username\": \"${ADMIN_USER}\", \"password\": \"${ADMIN_PASS}\"}" | jq -r '.access_token')
 
+# Удалим существующего юзера если есть
+curl -k -s -X DELETE "https://${DOCKER_GATEWAY}:30443/admin/users/job-worker" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" >/dev/null || true
+
 WORKER_PASS=$(openssl rand -hex 16)
 # Создаем пользователя job-worker
 curl -k -s -X POST "https://${DOCKER_GATEWAY}:30443/admin/users" \
@@ -324,6 +328,11 @@ WORKER_BEARER_TOKEN=$(curl -k -s -X POST "https://${DOCKER_GATEWAY}:30443/auth/t
   -H "Authorization: Bearer ${WORKER_AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
   -d "{\"name\": \"worker-token\"}" | jq -r '.token // .access_token')
+
+if [ -z "${WORKER_BEARER_TOKEN}" ] || [ "${WORKER_BEARER_TOKEN}" = "null" ]; then
+  echo "[-] ОШИБКА: не удалось выпустить API-токен для job-worker" >&2
+  exit 1
+fi
 
 # Кладем токен в Secret Кластера 1
 cat <<EOF | kubectl --context "$CTX_C1" apply -f -
