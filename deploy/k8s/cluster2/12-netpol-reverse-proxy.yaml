@@ -8,7 +8,6 @@ spec:
   podSelector:
     matchLabels:
       app: reverse-proxy
-      role: proxy
   policyTypes:
   - Ingress
   - Egress
