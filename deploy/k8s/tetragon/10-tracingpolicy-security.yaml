@@ -39,7 +39,8 @@ spec:
           type: "string"
       selectors:
         - matchNamespaces:
-            - core
+            - namespace: core
+              operator: In
           matchArgs:
             - index: 0
               operator: "Prefix"
@@ -54,7 +55,8 @@ spec:
           type: "string"
       selectors:
         - matchNamespaces:
-            - core
+            - namespace: core
+              operator: In
           matchArgs:
             - index: 0
               operator: "Prefix"
