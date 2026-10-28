@@ -304,10 +304,23 @@ kubectl --context "$CTX_C2" -n core rollout status deployment/reverse-proxy --ti
 kubectl --context "$CTX_C2" -n core rollout status deployment/containerd-auth --timeout=300s
 
 # Логинимся админом и выпускаем токен для сервисного воркера
-ADMIN_TOKEN=$(curl -k -s --retry 5 --retry-connrefused -X POST "https://${DOCKER_GATEWAY}:30443/auth/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"username\": \"${ADMIN_USER}\", \"password\": \"${ADMIN_PASS}\"}" | jq -r '.access_token')
-
+ADMIN_TOKEN=""
+for i in $(seq 1 30); do
+  RESP=$(curl -k -s -w '\n%{http_code}' -X POST "https://${DOCKER_GATEWAY}:30443/auth/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"username\": \"${ADMIN_USER}\", \"password\": \"${ADMIN_PASS}\"}")
+  HTTP_CODE=$(echo "$RESP" | tail -n1)
+  if [ "$HTTP_CODE" = "200" ]; then
+    ADMIN_TOKEN=$(echo "$RESP" | head -n -1 | jq -r '.access_token')
+    break
+  fi
+  echo "[*] auth не готов (HTTP ${HTTP_CODE}), попытка ${i}/30..."
+  sleep 3
+done
+if [ -z "${ADMIN_TOKEN}" ] || [ "${ADMIN_TOKEN}" = "null" ]; then
+  echo "[-] ОШИБКА: admin login не удался"
+  exit 1
+fi
 # Удалим существующего юзера если есть
 curl -k -s -X DELETE "https://${DOCKER_GATEWAY}:30443/admin/users/job-worker" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" >/dev/null || true
