@@ -132,7 +132,7 @@ def redis_cli(*args: str, stdin: str | None = None) -> str:
     global _POD_NAME
     if _POD_NAME is None:
         _POD_NAME = redis_pod_name()
-    return _kubectl("exec", _POD_NAME, "--", "redis-cli", *args, stdin=stdin)
+    return _kubectl("exec", "-i", _POD_NAME, "--", "redis-cli", *args, stdin=stdin)
 
 
 # ---------- Режим 2: прямой redis-py ----------
