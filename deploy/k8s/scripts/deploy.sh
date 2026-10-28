@@ -338,7 +338,7 @@ stringData:
 EOF
 
 # Запускаем job-worker в Кластере 1
-kubectl --context "$CTX_C1" apply -f "$ROOT/cluster1/11-job-worker.yaml"
+kubectl --context "$CTX_C1" apply -f "$STAGE/cluster1/11-job-worker.yaml"
 
 # Деплой тестовых badPods в Кластер 2 (в отдельный namespace)
 kubectl --context "$CTX_C2" apply -f "$ROOT/badpods/"
