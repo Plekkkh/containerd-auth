@@ -14,6 +14,7 @@ spec:
     metadata:
       labels:
         app: postgres
+        app.kubernetes.io/part-of: containerd-auth-lab
     spec:
       containers:
       - name: postgres

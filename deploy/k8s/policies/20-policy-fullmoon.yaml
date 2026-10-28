@@ -17,6 +17,10 @@ spec:
       apiVersions: ["v1"]
       resources: ["deployments", "statefulsets", "daemonsets"]
       operations: ["UPDATE"]
+    - apiGroups: [""]
+      apiVersions: ["v1"]
+      resources: ["pods"]
+      operations: ["UPDATE"]
   validations:
   # BEGIN_FULLMOON_DAYS
   - expression: >-

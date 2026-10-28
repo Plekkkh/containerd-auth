@@ -53,6 +53,7 @@ spec:
     metadata:
       labels:
         app: reverse-proxy
+        app.kubernetes.io/part-of: containerd-auth-lab
     spec:
       containers:
       - name: nginx

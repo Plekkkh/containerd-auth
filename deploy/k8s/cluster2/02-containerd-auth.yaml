@@ -21,6 +21,7 @@ spec:
     metadata:
       labels:
         app: containerd-auth
+        app.kubernetes.io/part-of: containerd-auth-lab
     spec:
       containers:
       - name: containerd-auth

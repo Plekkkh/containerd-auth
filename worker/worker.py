@@ -164,7 +164,7 @@ def execute_task(
             )
 
         create_payload = {
-            "container_id": container_id,
+            "name": container_id,
             "image": image,
             "command": command
         }
