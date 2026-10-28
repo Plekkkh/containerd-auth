@@ -130,19 +130,36 @@ helm repo update >/dev/null 2>&1
 
 PLATFORM="linux/amd64"   # для ARM-ноды: linux/arm64
 
+pull_retry() {
+  local ref="$1" i
+  for i in 1 2 3 4 5; do
+    timeout 120 docker pull --platform "$PLATFORM" "$ref" && return 0
+    echo "[!] pull $ref: попытка $i/5 не удалась, жду 5с..."
+    sleep 5
+  done
+  return 1
+}
+
 load_image() {
-  local img="$1"
-  local tar
+  local img="$1" src="$1" tar
   tar=$(mktemp --suffix=.tar)
 
-  echo "[+] Хостовый pull: $img"
-  docker pull --platform "$PLATFORM" "$img" || { rm -f "$tar"; return 1; }
+  echo "[+] Pull: $img"
+  if ! pull_retry "$img"; then
+    if [[ "$img" == reg.kyverno.io/* ]]; then
+      src="${img/reg.kyverno.io/ghcr.io}"
+      echo "[!] Основной реестр недоступен, пробую $src"
+      pull_retry "$src" || { echo "[-] Не удалось: $img"; rm -f "$tar"; return 1; }
+      docker tag "$src" "$img"
+    else
+      echo "[-] Не удалось: $img"; rm -f "$tar"; return 1
+    fi
+  fi
 
   echo "[+] Загрузка в ноду $C2_NAME..."
   docker save --platform "$PLATFORM" "$img" -o "$tar" \
     && kind load image-archive "$tar" --name "$C2_NAME"
   local rc=$?
-
   rm -f "$tar"
   return $rc
 }
