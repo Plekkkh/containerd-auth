@@ -102,9 +102,15 @@ echo "=========================================================="
 CALICO_URL="https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml"
 for ctx in "$CTX_C1" "$CTX_C2"; do
   echo "[*] Установка Calico в $ctx..."
-  kubectl --context "$ctx" apply -f "$CALICO_URL"
+  for i in 1 2 3 4 5; do
+    kubectl --context "$ctx" apply -f "$CALICO_URL" && break
+    echo "[!] apply: попытка $i/5 не удалась, жду 5с..."
+    sleep 5
+  done
+
   echo "[*] Ожидание готовности нод в $ctx..."
-  kubectl --context "$ctx" wait --for=condition=Ready nodes --all --timeout=120s
+  kubectl --context "$ctx" -n kube-system rollout status ds/calico-node --timeout=600s
+  kubectl --context "$ctx" wait --for=condition=Ready nodes --all --timeout=600s
 done
 
 echo "=========================================================="
