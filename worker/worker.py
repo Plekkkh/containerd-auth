@@ -291,7 +291,7 @@ def main():
                 raw_task = r.blpop(QUEUE, timeout=POLL_INTERVAL_SEC)
 
                 if not raw_task:
-                    logger.debug("Queue empty for %ds", POLL_INTERVAL_SEC)
+                    logger.info("Queue empty for %ds", POLL_INTERVAL_SEC)
                     continue
 
                 process_task(r, client, raw_task[1])
@@ -309,3 +309,7 @@ def main():
                     e
                 )
                 time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()
