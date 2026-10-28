@@ -56,7 +56,7 @@ def main():
     repl = (
         f"{marker_begin}\n"
         f"  - expression: >-\n"
-        f"      int(request.time) / 86400\n"
+        f"      int(time.now()) / 86400\n"
         f"        in [{lst}]\n"
         f"    message: \"Редактирование workload'ов разрешено только в сутки полнолуния.\"\n"
         f"  {marker_end}"

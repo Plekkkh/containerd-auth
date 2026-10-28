@@ -20,7 +20,7 @@ spec:
   validations:
   # BEGIN_FULLMOON_DAYS
   - expression: >-
-      int(request.time) / 86400
+      int(time.now()) / 86400
         in [20752, 20781, 20811, 20840, 20870, 20899, 20929, 20958, 20988, 21017, 21047, 21076, 21106, 21136, 21165]
     message: "Редактирование разрешено только в сутки полнолуния."
   # END_FULLMOON_DAYS
