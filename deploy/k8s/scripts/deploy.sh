@@ -128,28 +128,39 @@ helm repo add kyverno https://kyverno.github.io/kyverno --force-update >/dev/nul
 helm repo add cilium https://helm.cilium.io --force-update >/dev/null 2>&1
 helm repo update >/dev/null 2>&1
 
-echo "[*] Извлечение списка образов Kyverno..."
-KYVERNO_IMAGES=$(helm template kyverno kyverno/kyverno \
-  --namespace kyverno 2>/dev/null | \
-  grep -E '^\s*image:\s*' | awk '{print $2}' | tr -d '"'\'' ' | grep 'kyverno' | sort -u)
+PLATFORM="linux/amd64"   # для ARM-ноды: linux/arm64
 
-for img in $KYVERNO_IMAGES; do
-  echo "[+] Хостовый pull Kyverno: $img"
-  docker pull --platform linux/amd64 "$img"
+load_image() {
+  local img="$1"
+  local tar
+  tar=$(mktemp --suffix=.tar)
+
+  echo "[+] Хостовый pull: $img"
+  docker pull --platform "$PLATFORM" "$img" || { rm -f "$tar"; return 1; }
+
   echo "[+] Загрузка в ноду $C2_NAME..."
-  kind load docker-image "$img" --name "$C2_NAME"
+  docker save --platform "$PLATFORM" "$img" -o "$tar" \
+    && kind load image-archive "$tar" --name "$C2_NAME"
+  local rc=$?
+
+  rm -f "$tar"
+  return $rc
+}
+
+get_images() {  # $1=release  $2=chart  $3=namespace  $4=фильтр
+  helm template "$1" "$2" --namespace "$3" 2>/dev/null | \
+    grep -E '^\s*image:\s*' | awk '{print $2}' | tr -d "\"' " | \
+    grep "$4" | sort -u
+}
+
+echo "[*] Извлечение списка образов Kyverno..."
+for img in $(get_images kyverno kyverno/kyverno kyverno kyverno); do
+  load_image "$img"
 done
 
 echo "[*] Извлечение списка образов Tetragon..."
-TETRAGON_IMAGES=$(helm template tetragon cilium/tetragon \
-  --namespace tetragon 2>/dev/null | \
-  grep -E '^\s*image:\s*' | awk '{print $2}' | tr -d '"'\'' ' | grep 'tetragon' | sort -u)
-
-for img in $TETRAGON_IMAGES; do
-  echo "[+] Хостовый pull Tetragon: $img"
-  docker pull --platform linux/amd64 "$img"
-  echo "[+] Загрузка в ноду $C2_NAME..."
-  kind load docker-image "$img" --name "$C2_NAME"
+for img in $(get_images tetragon cilium/tetragon tetragon tetragon); do
+  load_image "$img"
 done
 
 echo "=========================================================="
