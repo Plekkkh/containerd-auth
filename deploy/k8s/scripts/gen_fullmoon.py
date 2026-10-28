@@ -5,14 +5,12 @@
   - опорное новолуние: 2000-01-06 18:14 UTC
   - синодический месяц: 29.530588853 сут
   - полнолуние = новолуние + SYN/2
-  - epoch_day = floor(unix_seconds / 86400) — тот же принцип, что в CEL-политике
-Точность ±0.15 сут на горизонте ~2 лет — достаточна для окна «сутки полнолуния»
-(задание: разница не более ±12 ч от пика; для лабы строгость ±1 сут приемлема,
-при желании сверяй с cal.date / NASA).
+  - epoch_day = floor(unix_seconds / 86400)
+(разница не более ±12 ч от пика)
 
 Скрипт:
   1) печатает таблицу дат + epoch_days,
-  2) перезаписывает список epoch-days в deploy/k8s/policies/20-policy-fullmoon-cel.yaml
+  2) перезаписывает список epoch-days в deploy/k8s/policies/20-policy-fullmoon.yaml
      между маркерами # BEGIN_FULLMOON_DAYS / # END_FULLMOON_DAYS,
   3) обновляет deploy/k8s/policies/fullmoon-calendar.md.
 """
@@ -24,7 +22,7 @@ from pathlib import Path
 REF_NEW_MOON = datetime(2000, 1, 6, 18, 14, tzinfo=timezone.utc)
 SYN = 29.530588853
 HERE = Path(__file__).resolve().parent.parent / "policies"
-POLICY = HERE / "20-policy-fullmoon-cel.yaml"
+POLICY = HERE / "20-policy-fullmoon.yaml"
 CALENDAR = HERE / "fullmoon-calendar.md"
 
 START = datetime(2026, 10, 1, tzinfo=timezone.utc)
@@ -60,8 +58,7 @@ def main():
         f"  - expression: >-\n"
         f"      int((time.Now() - timestamp('1970-01-01T00:00:00Z')) / duration('86400s'))\n"
         f"        in [{lst}]\n"
-        f"    message: \"Редактирование workload'ов разрешено только в сутки полнолуния "
-        f"(ближайшее окно: {nearest:%Y-%m-%d %H:%M} UTC).\"\n"
+        f"    message: \"Редактирование workload'ов разрешено только в сутки полнолуния.\"\n"
         f"  {marker_end}"
     )
     text = re.sub(rf"{re.escape(marker_begin)}.*?{re.escape(marker_end)}", repl, text, flags=re.S)
