@@ -30,6 +30,11 @@ data:
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       }
+    
+      location /healthz {
+        access_log off;
+        return 200 "healthy\n";
+      }
     }
 ---
 apiVersion: apps/v1
@@ -63,12 +68,20 @@ spec:
           readOnly: true
         readinessProbe:
           httpGet:
+            path: /healthz
+            port: 8443
             scheme: HTTPS
-            path: /auth/login
-            port: 30443
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
           initialDelaySeconds: 5
           periodSeconds: 10
-          timeoutSeconds: 5
+          timeoutSeconds: 2
         resources:
           requests: {cpu: 50m, memory: 64Mi}
           limits: {cpu: 250m, memory: 128Mi}
