@@ -38,15 +38,12 @@ spec:
         - index: 0
           type: "string"
       selectors:
-        - matchNamespaces:
-            - namespace: core
-              operator: In
-          matchArgs:
-            - index: 0
-              operator: "Prefix"
-              values:
-                - "/bin/sh"
-                - "/bin/bash"
+        - matchArgs:
+          - index: 0
+            operator: "Prefix"
+            values:
+              - "/bin/sh"
+              - "/bin/bash"
     # Запуск пакетных менеджеров
     - call: "sys_execve"
       syscall: true
@@ -54,13 +51,10 @@ spec:
         - index: 0
           type: "string"
       selectors:
-        - matchNamespaces:
-            - namespace: core
-              operator: In
-          matchArgs:
-            - index: 0
-              operator: "Prefix"
-              values:
-                - "/sbin/apk"
-                - "/usr/bin/apt"
-                - "/usr/bin/apt-get"
+        - matchArgs:
+          - index: 0
+            operator: "Prefix"
+            values:
+              - "/sbin/apk"
+              - "/usr/bin/apt"
+              - "/usr/bin/apt-get"
