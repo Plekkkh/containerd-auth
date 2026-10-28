@@ -55,7 +55,7 @@ def get_redis_client(killer: GracefulExit) -> redis.Redis:
     retry_delay = 2
     while not killer.kill_now:
         try:
-            r = redis.from_url(REDIS_URL, decode_responses=True)
+            r = redis.from_url(REDIS_URL, decode_responses=True, socket_timeout=15)
             r.ping()
             logger.info("Connected to Redis: %s", REDIS_URL)
             return r
