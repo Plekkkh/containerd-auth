@@ -308,22 +308,20 @@ ADMIN_TOKEN=""
 for i in $(seq 1 30); do
   RESP=$(curl -k -s -w '\n%{http_code}' -X POST "https://${DOCKER_GATEWAY}:30443/auth/login" \
     -H "Content-Type: application/json" \
-    -d "{\"username\": \"${ADMIN_USER}\", \"password\": \"${ADMIN_PASS}\"}")
+    -d "{\"username\": \"${ADMIN_USER}\", \"password\": \"${ADMIN_PASS}\"}") || true
   HTTP_CODE=$(echo "$RESP" | tail -n1)
   if [ "$HTTP_CODE" = "200" ]; then
-    ADMIN_TOKEN=$(echo "$RESP" | head -n -1 | jq -r '.access_token')
+    ADMIN_TOKEN=$(echo "$RESP" | sed '$d' | jq -r '.access_token')
     break
   fi
   echo "[*] auth не готов (HTTP ${HTTP_CODE}), попытка ${i}/30..."
   sleep 3
 done
 if [ -z "${ADMIN_TOKEN}" ] || [ "${ADMIN_TOKEN}" = "null" ]; then
-  echo "[-] ОШИБКА: admin login не удался"
+  echo "[-] ОШИБКА: admin login не удался за 30 попыток"
   exit 1
 fi
-# Удалим существующего юзера если есть
-curl -k -s -X DELETE "https://${DOCKER_GATEWAY}:30443/admin/users/job-worker" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" >/dev/null || true
+echo "[+] Admin login OK"
 
 WORKER_PASS=$(openssl rand -hex 16)
 # Создаем пользователя job-worker
