@@ -284,7 +284,7 @@ fi
 # Применение политик допуска
 echo "[*] Применение политик Kyverno..."
 kubectl --context "$CTX_C2" apply -f "$ROOT/policies/10-policy-target-app.yaml"
-kubectl --context "$CTX_C2" apply -f "$ROOT/policies/20-policy-fullmoon-cel.yaml"
+kubectl --context "$CTX_C2" apply -f "$ROOT/policies/20-policy-fullmoon.yaml"
 
 # Установка Tetragon
 if ! kubectl --context "$CTX_C2" -n tetragon get ds tetragon >/dev/null 2>&1; then
