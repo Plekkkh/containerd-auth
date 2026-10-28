@@ -129,40 +129,7 @@ helm repo add cilium https://helm.cilium.io --force-update >/dev/null 2>&1
 helm repo update >/dev/null 2>&1
 
 PLATFORM="linux/amd64"   # для ARM-ноды: linux/arm64
-
-pull_retry() {
-  local ref="$1" i
-  for i in 1 2 3 4 5; do
-    timeout 120 docker pull --platform "$PLATFORM" "$ref" && return 0
-    echo "[!] pull $ref: попытка $i/5 не удалась, жду 5с..."
-    sleep 5
-  done
-  return 1
-}
-
-load_image() {
-  local img="$1" src="$1" tar
-  tar=$(mktemp --suffix=.tar)
-
-  echo "[+] Pull: $img"
-  if ! pull_retry "$img"; then
-    if [[ "$img" == reg.kyverno.io/* ]]; then
-      src="${img/reg.kyverno.io/ghcr.io}"
-      echo "[!] Основной реестр недоступен, пробую $src"
-      pull_retry "$src" || { echo "[-] Не удалось: $img"; rm -f "$tar"; return 1; }
-      docker tag "$src" "$img"
-    else
-      echo "[-] Не удалось: $img"; rm -f "$tar"; return 1
-    fi
-  fi
-
-  echo "[+] Загрузка в ноду $C2_NAME..."
-  docker save --platform "$PLATFORM" "$img" -o "$tar" \
-    && kind load image-archive "$tar" --name "$C2_NAME"
-  local rc=$?
-  rm -f "$tar"
-  return $rc
-}
+RETRIES=5
 
 get_images() {  # $1=release  $2=chart  $3=namespace  $4=фильтр
   helm template "$1" "$2" --namespace "$3" 2>/dev/null | \
@@ -170,15 +137,62 @@ get_images() {  # $1=release  $2=chart  $3=namespace  $4=фильтр
     grep "$4" | sort -u
 }
 
+pull_retry() {
+  local ref="$1" i
+  for ((i=1; i<=RETRIES; i++)); do
+    timeout 180 docker pull --platform "$PLATFORM" "$ref" && return 0
+    echo "[!] pull $ref: попытка $i/$RETRIES не удалась, жду 5с..."
+    sleep 5
+  done
+  return 1
+}
+
+load_retry() {
+  local tar="$1" i
+  for ((i=1; i<=RETRIES; i++)); do
+    kind load image-archive "$tar" --name "$C2_NAME" && return 0
+    echo "[!] загрузка в ноду: попытка $i/$RETRIES не удалась, жду 3с..."
+    sleep 3
+  done
+  return 1
+}
+
+load_image() {
+  local img="$1"
+  local src="${img/reg.kyverno.io/ghcr.io}"   # всегда берём с ghcr.io
+  local tar rc
+  tar=$(mktemp --suffix=.tar)
+
+  echo "[+] Pull: $src"
+  pull_retry "$src" || { echo "[-] Не удалось скачать: $src"; rm -f "$tar"; return 1; }
+
+  # вернуть исходное имя, которое ожидает helm-манифест
+  [[ "$src" != "$img" ]] && docker tag "$src" "$img"
+
+  echo "[+] Загрузка в ноду $C2_NAME: $img"
+  docker save --platform "$PLATFORM" "$img" -o "$tar" && load_retry "$tar"
+  rc=$?
+  rm -f "$tar"
+  return $rc
+}
+
 echo "[*] Извлечение списка образов Kyverno..."
-for img in $(get_images kyverno kyverno/kyverno kyverno kyverno); do
-  load_image "$img"
-done
+KYVERNO_IMAGES=$(get_images kyverno kyverno/kyverno kyverno kyverno)
 
 echo "[*] Извлечение списка образов Tetragon..."
-for img in $(get_images tetragon cilium/tetragon tetragon tetragon); do
-  load_image "$img"
+TETRAGON_IMAGES=$(get_images tetragon cilium/tetragon tetragon tetragon)
+
+FAILED=()
+for img in $KYVERNO_IMAGES $TETRAGON_IMAGES; do
+  load_image "$img" || FAILED+=("$img")
 done
+
+if ((${#FAILED[@]})); then
+  echo "[-] Не загружены:"
+  printf '  %s\n' "${FAILED[@]}"
+  exit 1
+fi
+echo "[+] Все образы загружены"
 
 echo "=========================================================="
 echo " [6/9] Инициализация Namespaces и Secrets"
