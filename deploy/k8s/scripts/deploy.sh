@@ -300,8 +300,8 @@ echo "=========================================================="
 echo " [9/9] Выпуск M2M Service Token и запуск Job-Worker"
 echo "=========================================================="
 echo "[*] Ожидание готовности reverse-proxy и containerd-auth..."
-kubectl --context "$CTX_C2" -n core rollout status deployment/reverse-proxy --timeout=90s
-kubectl --context "$CTX_C2" -n core rollout status deployment/containerd-auth --timeout=90s
+kubectl --context "$CTX_C2" -n core rollout status deployment/reverse-proxy --timeout=300s
+kubectl --context "$CTX_C2" -n core rollout status deployment/containerd-auth --timeout=300s
 
 # Логинимся админом и выпускаем токен для сервисного воркера
 ADMIN_TOKEN=$(curl -k -s --retry 5 --retry-connrefused -X POST "https://${DOCKER_GATEWAY}:30443/auth/login" \
