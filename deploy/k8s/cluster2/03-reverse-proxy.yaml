@@ -64,10 +64,11 @@ spec:
         readinessProbe:
           httpGet:
             scheme: HTTPS
-            path: /
+            path: /auth/login
             port: 30443
-          initialDelaySeconds: 3
+          initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 5
         resources:
           requests: {cpu: 50m, memory: 64Mi}
           limits: {cpu: 250m, memory: 128Mi}
