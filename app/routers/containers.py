@@ -70,8 +70,9 @@ def create_container(
         container_id = runtime.create_container(body.name, body.image, body.command)
     except RuntimeConflict:
         raise HTTPException(409, "Name already taken")
-    except RuntimeUnavailable:
-        raise HTTPException(502, "Container runtime error")
+    except RuntimeUnavailable as e:
+        logger.exception("create_container failed for %r: %s", body.name, e)
+        raise HTTPException(502, f"Container runtime error: {e}")
 
     try:
         db.add(ContainerOwnership(container_id=container_id, owner_id=user.id))
