@@ -1,12 +1,16 @@
 import re
+import logging
 
 from fastapi import APIRouter, Depends, Request, HTTPException
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy.exc import IntegrityError
 
 from app.db import ContainerOwnership, get_db, User, ImageOwnership
 from app.rbac import get_current_user
 from app.runtime.base import RuntimeUnavailable, RuntimeConflict
 from app.audit import audit
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -69,7 +73,19 @@ def create_container(
     except RuntimeUnavailable:
         raise HTTPException(502, "Container runtime error")
 
-    db.add(ContainerOwnership(container_id=container_id, owner_id=user.id))
+    try:
+        db.add(ContainerOwnership(container_id=container_id, owner_id=user.id))
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        try:
+            runtime.remove(container_id)
+        except Exception:
+            logger.exception(
+                "Compensation: failed to remove orphan container %r",
+                container_id
+            )
+        raise HTTPException(409, "Name already taken")
     audit(db, user.username, "container.create", container_id)
     return {"id": container_id, "name": body.name, "image": body.image}
 

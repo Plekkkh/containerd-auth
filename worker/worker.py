@@ -29,7 +29,7 @@ API_TOKEN = os.getenv("WORKER_API_TOKEN")
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 POLL_INTERVAL_SEC = int(os.getenv("WORKER_POLL_INTERVAL_SEC", "5"))
-REQUEST_TIMEOUT_SEC = float(os.getenv("WORKER_REQUEST_TIMEOUT_SEC", "15.0"))
+REQUEST_TIMEOUT_SEC = float(os.getenv("WORKER_REQUEST_TIMEOUT_SEC", "120.0"))
 TLS_INSECURE = os.getenv("WORKER_TLS_INSECURE_SKIP_VERIFY", "true").lower() in ("true", "1", "yes")
 
 QUEUE = "tasks"

@@ -21,7 +21,8 @@ def audit(
     result: "ok" | "denied" | "error"
     """
     try:
-        db.add(AuditLog(actor=actor, action=action, resource=resource, result=result))
-        db.flush()
+        with db.begin_nested():
+            db.add(AuditLog(actor=actor, action=action, resource=resource, result=result))
+            db.flush()
     except Exception:
         logger.exception("audit write failed for action=%s resource=%s", action, resource)

@@ -3,6 +3,7 @@ import re
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 from app.db import get_db, ImageOwnership, User
 from app.rbac import get_current_user
@@ -51,7 +52,12 @@ def pull_image(
     except RuntimeUnavailable:
         raise HTTPException(502, "Image registry error")
 
-    db.add(ImageOwnership(image_ref=ref, owner_id=user.id))
+    try:
+        db.add(ImageOwnership(image_ref=ref, owner_id=user.id))
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        return {"image": ref, "status": "already-present"}
     audit(db, user.username, "image.pull", ref)
     return {"image": ref, "status": "pulled"}
 
@@ -103,4 +109,3 @@ def delete_image(
         runtime.remove_image(image_ref)
     audit(db, user.username, "image.delete", image_ref)
     return {"status": "deleted", "detached": 1}
-
