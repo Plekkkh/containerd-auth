@@ -36,6 +36,11 @@ spec:
         - name: containerd-sock
           mountPath: /run/containerd/containerd.sock
           readOnly: true
+        - name: containerd-logs
+          mountPath: /var/log/containerd-auth-logs
+        env:
+        - name: LOG_DIR
+          value: /var/log/containerd-auth-logs
         resources:
           requests: {cpu: 100m, memory: 128Mi}
           limits: {cpu: 500m, memory: 512Mi}
@@ -44,6 +49,10 @@ spec:
         hostPath:
           path: /run/containerd/containerd.sock
           type: Socket
+      - name: containerd-logs
+        hostPath:
+          path: /var/log/containerd-auth-logs
+          type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service

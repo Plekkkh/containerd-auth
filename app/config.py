@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     JWT_TTL_MINUTES: int = 15
     RUNTIME_ADAPTER: str = "fake"
     CONTAINERD_SOCKET: str = "/run/containerd/containerd.sock"
+    LOG_DIR: str = "logs"
 
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "Password123!"

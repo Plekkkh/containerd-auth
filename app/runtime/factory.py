@@ -13,6 +13,6 @@ def make_runtime(settings: Settings) -> Runtime:
             sock = settings.CONTAINERD_SOCKET
             if "://" not in sock:
                 sock = f"unix://{sock}"
-            return ContainerdRuntime(sock)
+            return ContainerdRuntime(sock, log_dir=settings.LOG_DIR)
         case _:
             raise ValueError(f"Unknown runtime adapter: {settings.RUNTIME_ADAPTER}")
